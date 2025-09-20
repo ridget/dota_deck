@@ -1,0 +1,30 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.16.0/.schema/devbox.schema.json",
+  "packages": {
+    "elixir":                        "latest",
+    "erlang":                        "latest",
+    "postgresql":                   "17",
+    "postgresql17Packages.pgvector": {
+      "version": "latest",
+      "outputs": ["out"]
+    },
+    "darwin.apple_sdk.frameworks.CoreServices": {
+      "platforms": ["arm64-darwin", "x86_64-darwin"]
+    }
+  },
+  "env": {
+    "PGPORT":     "4214",
+  },
+  "shell": {
+    "init_hook": [
+      "mkdir -p $DEVBOX_WD/.devbox/virtenv/mix",
+      "mkdir -p $DEVBOX_WD/.devbox/virtenv/hex",
+      "export MIX_HOME=$DEVBOX_WD/.devbox/virtenv/mix",
+      "export HEX_HOME=$DEVBOX_WD/.devbox/virtenv/hex",
+      "mix local.hex --force --if-missing",
+    ],
+    "scripts": {
+      "init-postgres": ".devbox_scripts/init-postgres",
+    }
+  }
+}

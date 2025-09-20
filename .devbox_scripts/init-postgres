@@ -1,0 +1,8 @@
+#!/bin/bash
+
+set -e
+
+if [ -z "$(ls -A "$PGDATA")" ]; then
+  echo "==> no files in \$PGDATA, initialising postgres"
+  initdb -U postgres
+fi

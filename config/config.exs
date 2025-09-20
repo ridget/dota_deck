@@ -9,10 +9,8 @@ import Config
 
 config :dota_deck, DotaDeck.Repo,
   database: "dota_deck_repo",
-  username: "user",
-  password: "pass",
-  hostname: "localhost",
-  types: DotaDeck.PostgrexTypes
+  types: DotaDeck.PostgrexTypes,
+  port:  System.get_env("PGPORT") || "5432"
 
 config :dota_deck,
   ecto_repos: [DotaDeck.Repo],
