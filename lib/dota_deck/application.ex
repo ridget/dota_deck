@@ -17,7 +17,12 @@ defmodule DotaDeck.Application do
       # Start a worker by calling: DotaDeck.Worker.start_link(arg)
       # {DotaDeck.Worker, arg},
       # Start to serve requests, typically the last entry
-      DotaDeckWeb.Endpoint
+      DotaDeckWeb.Endpoint,
+      {Nx.Serving,
+       serving: DotaDeck.Embedding.serving(defn_options: [compiler: EXLA]),
+       batch_size: 3,
+       batch_timeout: 100,
+       name: Embedding}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
