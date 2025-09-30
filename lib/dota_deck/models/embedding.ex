@@ -23,6 +23,10 @@ defmodule DotaDeck.Embedding do
     Nx.Serving.batched_run(Embedding, text)
   end
 
+  def search(query) do
+    Nx.Serving.run(serving(defn_options: [compiler: EXLA]), query)
+  end
+
   defp load() do
     {:ok, model} =
       Bumblebee.load_model({:hf, @hf_model_repo})
