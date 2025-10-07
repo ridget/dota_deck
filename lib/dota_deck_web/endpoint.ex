@@ -15,6 +15,8 @@ defmodule DotaDeckWeb.Endpoint do
     websocket: [connect_info: [session: @session_options]],
     longpoll: [connect_info: [session: @session_options]]
 
+  # ensure audio files are not cached
+  plug DotaDeckWeb.Plugs.NoCacheAudio
   # Serve at "/" the static files from "priv/static" directory.
   #
   # You should set gzip to true if you are running phx.digest
@@ -23,6 +25,7 @@ defmodule DotaDeckWeb.Endpoint do
     at: "/",
     from: :dota_deck,
     gzip: false,
+    cache_control_for_etags: "no-store, no-cache",
     only: DotaDeckWeb.static_paths()
 
   # Code reloading can be explicitly enabled under the

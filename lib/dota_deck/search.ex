@@ -8,7 +8,7 @@ defmodule DotaDeck.Search do
     by_embedding(emb)
   end
 
-  defp by_embedding(embedding, limit \\ 10) do
+  defp by_embedding(embedding, limit \\ 1) do
     Repo.all(from c in Clip, order_by: l2_distance(c.embedding, ^embedding), limit: ^limit)
   end
 end

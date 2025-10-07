@@ -1,5 +1,5 @@
 defmodule DotaDeck.ClipPipeline do
-  alias DotaDeck.{Repo, Clip, SpeechTranscription, Embedding}
+  alias DotaDeck.{Repo, Clip, SpeechTranscription, Embedding, PathHelper}
 
   def process_clips(audio_paths, max_concurrency \\ 2) do
     audio_paths
@@ -16,7 +16,12 @@ defmodule DotaDeck.ClipPipeline do
   def process_clip(path) do
     with %{chunks: [%{text: tx} | _]} <- SpeechTranscription.predict(path),
          %{embedding: emb} <- Embedding.predict(tx) do
-      Repo.insert!(%Clip{file_path: path, transcript: tx, embedding: emb})
+      Repo.insert!(%Clip{
+        file_path: PathHelper.to_static_url_path(path),
+        transcript: tx,
+        embedding: emb
+      })
+
       {:ok, path}
     else
       err -> {:error, path, err}

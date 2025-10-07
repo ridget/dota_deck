@@ -11,7 +11,7 @@ defmodule Mix.Tasks.ProcessClips do
     {:ok, _sup_pid} = DotaDeck.PipelineSupervisor.start_link(defn_options: [compiler: EXLA])
 
     # Load audio files from priv directory
-    audio_paths = Path.wildcard("priv/audio/*.mp3")
+    audio_paths = Path.wildcard("priv/static/audio/*.mp3")
 
     # Call your pipeline function (replace with your actual module)
     DotaDeck.ClipPipeline.process_clips(audio_paths)
