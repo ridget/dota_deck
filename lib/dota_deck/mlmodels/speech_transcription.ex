@@ -1,4 +1,4 @@
-defmodule DotaDeck.SpeechTranscription do
+defmodule DotaDeck.MLModels.SpeechTranscription do
   @hf_model_repo "openai/whisper-small.en"
 
   def serving(opts \\ []) do

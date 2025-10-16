@@ -8,12 +8,10 @@ defmodule Mix.Tasks.ProcessClips do
     Mix.Task.run("app.start")
 
     # Start a supervisor for our audio transcription pipeline
-    {:ok, _sup_pid} = DotaDeck.PipelineSupervisor.start_link(defn_options: [compiler: EXLA])
-
-    # Load audio files from priv directory
-    audio_paths = Path.wildcard("priv/static/audio/*.mp3")
+    {:ok, _sup_pid} =
+      DotaDeck.Ingestion.TranscriptionSupervisor.start_link(defn_options: [compiler: EXLA])
 
     # Call your pipeline function (replace with your actual module)
-    DotaDeck.ClipPipeline.process_clips(audio_paths)
+    DotaDeck.Ingestion.Processor.process_clips()
   end
 end

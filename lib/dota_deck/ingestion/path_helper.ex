@@ -1,4 +1,4 @@
-defmodule DotaDeck.PathHelper do
+defmodule DotaDeck.Ingestion.PathHelper do
   def to_static_url_path(filepath) do
     # Remove the "priv/static" prefix
     url_path = String.replace_prefix(filepath, "priv/static", "")

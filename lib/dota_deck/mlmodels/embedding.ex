@@ -1,4 +1,4 @@
-defmodule DotaDeck.Embedding do
+defmodule DotaDeck.MLModels.Embedding do
   @hf_model_repo "sentence-transformers/all-MiniLM-L6-v2"
 
   def serving(opts \\ []) do

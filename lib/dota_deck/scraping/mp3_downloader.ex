@@ -9,7 +9,9 @@ defmodule DotaDeck.Scraping.MP3Downloader do
     |> Stream.run()
   end
 
-  defp retrieve_all_audio_for_hero(hero_name) do
+  def retrieve_all_audio_for_hero(hero_name) do
+    # [%{}]
+    # |> downloader
     url = "#{@base_url}/#{hero_name}/Responses"
     static_dir = Path.join([:code.priv_dir(:dota_deck), "static", "audio"])
     hero_path = "#{static_dir}/#{hero_name}"
@@ -18,6 +20,25 @@ defmodule DotaDeck.Scraping.MP3Downloader do
     case HTTPoison.get(url, [], follow_redirect: true) do
       {:ok, %HTTPoison.Response{status_code: 200, body: html}} ->
         parsed_html = html |> Floki.parse_document!()
+
+        sections = Floki.find(html, ".mw-parser-output h2 span.mw-headline")
+
+        # extract hero name
+        # extract section text
+        # fetch any sub context for current audio
+        # fetch any abilities
+
+        # Enum.map(sections, fn section ->
+        #   section_text = Floki.text(section)
+
+        #   %{
+        #     hero_name: hero_name,
+        #     section: section_text,
+        #     # sub_context:,
+        #     ability: extract_ability(section, section_text)
+        #     # interaction_target:,
+        #   }
+        # end)
 
         parsed_html
         |> extract_audio_urls()
@@ -35,6 +56,33 @@ defmodule DotaDeck.Scraping.MP3Downloader do
     end
   end
 
+  # def build_audio_section(hero_name, section, "Respawning") do
+  #   %{
+  #     hero_name: hero_name,
+  #     section: section_title,
+  #     sub_context: nil,
+  #     ability: nil,
+  #     interaction_target: nil,
+  #     audio_url: extract_audio_urls(section)
+  #   }
+  # end
+
+  def build_audio_rows_for_section(hero_name, section) do
+    section_title = Floki.text(section)
+
+    with do
+    end
+
+    %{
+      hero_name: hero_name,
+      section: section_title,
+      sub_context: nil,
+      ability: nil,
+      interaction_target: nil,
+      audio_url: extract_audio_urls(section)
+    }
+  end
+
   def log_urls(urls) do
     IO.warn(Enum.map(urls, fn url -> url end))
     urls
@@ -49,7 +97,6 @@ defmodule DotaDeck.Scraping.MP3Downloader do
   defp download_audio(hero_path, hero, url) do
     case result = HTTPoison.get(url, [], recv_timeout: 60_000) do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
-        # fix up devbox
         File.write!("#{hero_path}/#{build_filename(hero, url)}", body)
 
       {:ok, resp} ->

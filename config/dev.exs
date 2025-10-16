@@ -83,3 +83,9 @@ config :phoenix_live_view,
 
 # Disable swoosh api client as it is only required for production adapters.
 config :swoosh, :api_client, false
+
+config :instructor,
+  adapter: Instructor.Adapters.Ollama,
+  ollama: [
+    api_url: "http://localhost:11434"
+  ]

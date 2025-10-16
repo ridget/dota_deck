@@ -19,7 +19,7 @@ defmodule DotaDeck.Application do
       # Start to serve requests, typically the last entry
       DotaDeckWeb.Endpoint,
       {Nx.Serving,
-       serving: DotaDeck.Embedding.serving(defn_options: [compiler: EXLA]),
+       serving: DotaDeck.MLModels.Embedding.serving(defn_options: [compiler: EXLA]),
        batch_size: 3,
        batch_timeout: 100,
        name: Embedding}
