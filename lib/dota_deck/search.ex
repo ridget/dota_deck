@@ -1,5 +1,6 @@
 defmodule DotaDeck.Search do
-  alias DotaDeck.{Embedding, Repo, Clip}
+  alias DotaDeck.{Repo, Clip}
+  alias DotaDeck.MLModels.Embedding
   import Ecto.Query
   import Pgvector.Ecto.Query
 
@@ -8,7 +9,7 @@ defmodule DotaDeck.Search do
     by_embedding(emb)
   end
 
-  defp by_embedding(embedding, limit \\ 1) do
-    Repo.all(from c in Clip, order_by: l2_distance(c.embedding, ^embedding), limit: ^limit)
+  defp by_embedding(embedding) do
+    Repo.all(from c in Clip, order_by: l2_distance(c.embedding, ^embedding), limit: 25)
   end
 end

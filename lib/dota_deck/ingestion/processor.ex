@@ -1,5 +1,6 @@
 defmodule DotaDeck.Ingestion.Processor do
   @audio_dir Path.join([:code.priv_dir(:dota_deck), "static", "audio"])
+  require Logger
 
   alias DotaDeck.{
     Repo,
@@ -7,10 +8,11 @@ defmodule DotaDeck.Ingestion.Processor do
   }
 
   alias DotaDeck.Ingestion.{
-    PathHelper,
-    VoiceLineMetadata,
-    HeroNameExtractor
+    EmbeddingGenerator,
+    VoiceLineMetadata
   }
+
+  alias DotaDeck.Scraper.StagingClip
 
   alias DotaDeck.MLModels.{
     SpeechTranscription,
@@ -18,9 +20,8 @@ defmodule DotaDeck.Ingestion.Processor do
   }
 
   def process_clips(max_concurrency \\ 2) do
-    load_hero_clip_paths()
-    |> Task.async_stream(
-      fn {hero_name, path} -> process_clip(hero_name, path) end,
+    Repo.all(StagingClip.downloaded_and_unprocessed())
+    |> Task.async_stream(&process_clip/1,
       max_concurrency: max_concurrency,
       timeout: :infinity
     )
@@ -30,37 +31,28 @@ defmodule DotaDeck.Ingestion.Processor do
     end)
   end
 
-  defp process_clip(hero_name, path) do
-    with %{chunks: [%{text: tx} | _]} <- SpeechTranscription.predict(path),
-         {:ok, metadata} <- VoiceLineMetadata.predict(tx),
-         %{embedding: emb} <- Embedding.predict(tx) do
-      Repo.insert!(
-        %Clip{
-          file_path: PathHelper.to_static_url_path(path),
-          transcript: tx,
-          embedding: emb,
-          hero_name: hero_name
-        }
-        |> Map.merge(metadata)
-      )
+  # Will talk to this later
+  # {:ok, metadata} <- VoiceLineMetadata.predict(staging_clip),
+
+  defp process_clip(
+         %StagingClip{downloaded: true, processed: false, filepath: path} = staging_clip
+       ) do
+    with %{chunks: [%{text: tx} | _]} <- SpeechTranscription.predict(@audio_dir <> "/" <> path),
+         trimmed_text <- String.trim(tx),
+         {:ok, metadata} <- VoiceLineMetadata.predict(staging_clip, trimmed_text),
+         text_to_embed <- EmbeddingGenerator.generate(staging_clip, metadata),
+         %{embedding: emb} <-
+           Embedding.predict(text_to_embed) do
+      Repo.insert!(%Clip{
+        file_path: path,
+        transcript: trimmed_text,
+        embedding: emb,
+        hero_name: staging_clip.hero_name
+      })
 
       {:ok, path}
     else
       err -> {:error, path, err}
     end
-  end
-
-  defp load_hero_clip_paths do
-    Path.wildcard(Path.join([@audio_dir, "*", "*.mp3"]))
-    |> Enum.map(fn full_path ->
-      [hero_name | _] =
-        full_path
-        |> Path.split()
-        |> Enum.reverse()
-        |> Enum.slice(1, 1)
-
-      # 3. Return the unit of work: {hero_name, full_path}
-      {hero_name, full_path}
-    end)
   end
 end

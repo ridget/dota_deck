@@ -66,7 +66,8 @@ defmodule DotaDeck.MixProject do
       {:req, "~> 0.5.0"},
       {:httpoison, "~> 2.0"},
       {:recase, "~> 0.5"},
-      {:instructor, "~> 0.1.0"}
+      {:instructor, "~> 0.1.0"},
+      {:flop_phoenix, "~> 0.25.3"}
     ]
   end
 

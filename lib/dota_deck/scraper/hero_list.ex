@@ -1,5 +1,5 @@
-defmodule DotaDeck.Scraping.HeroList do
-  alias DotaDeck.Scraping.TitleSnakeCaseConversion
+defmodule DotaDeck.Scraper.HeroList do
+  alias DotaDeck.Scraper.TitleSnakeCaseConversion
 
   @url "https://liquipedia.net/dota2/Portal:Heroes"
 

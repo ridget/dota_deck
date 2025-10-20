@@ -22,7 +22,12 @@ defmodule DotaDeck.Application do
        serving: DotaDeck.MLModels.Embedding.serving(defn_options: [compiler: EXLA]),
        batch_size: 3,
        batch_timeout: 100,
-       name: Embedding}
+       name: Embedding},
+      {Nx.Serving,
+       serving: DotaDeck.MLModels.SpeechTranscription.serving(defn_options: [compiler: EXLA]),
+       batch_size: 3,
+       batch_timeout: 100,
+       name: SpeechTranscription}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

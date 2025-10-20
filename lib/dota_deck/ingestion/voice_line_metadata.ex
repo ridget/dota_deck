@@ -1,6 +1,8 @@
 defmodule DotaDeck.Ingestion.VoiceLineMetadata do
   @model "mistral:7b"
 
+  alias DotaDeck.Scraper.StagingClip
+
   defmodule Metadata do
     use Ecto.Schema
     use Instructor
@@ -18,17 +20,14 @@ defmodule DotaDeck.Ingestion.VoiceLineMetadata do
     """
     @primary_key false
     embedded_schema do
-      field :interaction_type, :string
-      field :themes, {:array, :string}, default: []
-      field :keywords, {:array, :string}, default: []
-      field :intents, {:array, :string}, default: []
-      field :inferred_archetype, :string
-      field :primary_sentiment, :string
-      field :secondary_sentiment, :string
+      field :emotion, :string
+      field :intent, :string
+      field :theme, :string
+      field :summary, :string
     end
   end
 
-  def predict(hero_name, context, transcription, ability \\ nil) do
+  def predict(%StagingClip{} = staging_clip, transcript) do
     Instructor.chat_completion(
       model: @model,
       response_model: DotaDeck.Ingestion.VoiceLineMetadata.Metadata,
@@ -38,42 +37,40 @@ defmodule DotaDeck.Ingestion.VoiceLineMetadata do
         %{
           role: "user",
           content: """
-          You are an expert linguistic and psychological analysis system specializing in inferring context and personality from dialogue of Dota 2 heroes.
-          Your task is to analyze transcribed video game voice lines from Dota 2.
+          You are an expert semantic analyzer for Dota 2 voice lines. Your task is to analyze the provided raw voice line and its structured metadata, and then generate four new, critical semantic fields: Emotion, Intent, Theme, and a brief Contextual Summary.
 
-          Given a short transcribed voice line, perform a deep analysis based solely on the provided text and hero name and the context and ability under which it would be used in game with Dota 2.
-          Use your knowledge of Dota 2, the character speaking or the specific in-game situation to guide your response.
+          Strictly use the following input data to infer the output:
 
-          Your goal is to return highly structured and useful metadata for an emotional and contextual search system.
+          --- INPUT DATA ---
+          Hero Name: #{staging_clip.hero_name |> format_field}
+          Context Category: #{staging_clip.headline |> format_field}
+          Voiceline Transcript: #{transcript |> format_field}
+          Target Hero Interaction: #{staging_clip.hero_interaction |> format_field}
+          Ability Name: #{staging_clip.ability_name |> format_field}
+          Item Name: #{staging_clip.item_name |> format_field}
+          Additional Context: #{staging_clip.context |> format_field}
+          --- END INPUT ---
 
-          Perform the following analysis:
+          Output only a JSON object containing the four generated fields. Do not include any other text or explanation.
 
-          Sentiment: Analyze the complex emotional tone. Describe the primary and any secondary emotions.
-
-          Interaction Type: Identify the social function or intent of the line. Is it directed at enemies, allies, or the self? Classify its purpose (e.g., Taunt, Command, Question, Observation, Lament, Boast, Encouragement).
-
-          Themes: List the key abstract concepts or ideas present in the line. Themes are the underlying concepts (e.g., death, victory, magic), not the emotion of the delivery.
-
-          Intents: Suggest real-world intents for conversational use. e.g., "joking", "frustration", "celebration"
-
-          Inferred Archetype: Based only on the vocabulary, syntax, and tone, describe the implied character archetype (e.g., Wise Scholar, Bloodthirsty Berserker, Cynical Trickster, Noble Knight).
-
-          Search Keywords: Provide 8-12 concise keywords. Include a mix of literal words, emotional concepts, and use-case descriptors for robust semantic search.
-          <hero>
-            #{hero_name}
-          </hero>
-          <context>
-            #{context}
-          </context>
-          <ability>
-            #{ability}
-          </ability>
-          <transcription>
-            #{transcription}
-          </transcription>
+          JSON Schema:
+          {
+            "emotion": "A concise, comma-separated list of the core emotions conveyed by the line (e.g., sarcastic, humorous, aggressive, joyful).",
+            "intent": "A concise, comma-separated list of the line's purpose in gameplay (e.g., taunt, farewell, warning, initiation, thank, regret).",
+            "theme": "A concise, comma-separated list of abstract concepts or events the line references (e.g., victory, death, power, betrayal, travel).",
+            "summary": "A brief, 3-5 word summary of the line's function in the game."
+          }
           """
         }
       ]
     )
+  end
+
+  defp format_field(nil) do
+    "None"
+  end
+
+  defp format_field(field) do
+    field
   end
 end
