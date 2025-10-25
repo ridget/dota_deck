@@ -1,4 +1,4 @@
-defmodule DotaDeck.MLModels.Embedding do
+defmodule DotaDeck.Models.Embedding do
   @hf_model_repo "sentence-transformers/all-MiniLM-L6-v2"
 
   def serving(opts \\ []) do
@@ -19,11 +19,11 @@ defmodule DotaDeck.MLModels.Embedding do
     )
   end
 
-  def predict(text) do
+  def batch_generate_embedding(text) do
     Nx.Serving.batched_run(Embedding, text)
   end
 
-  def search(query) do
+  def generate_embedding(query) do
     Nx.Serving.run(serving(defn_options: [compiler: EXLA]), query)
   end
 

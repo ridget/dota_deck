@@ -3,63 +3,32 @@ defmodule DotaDeckWeb.SearchLive do
 
   alias DotaDeck.Search
 
+  @impl true
   def mount(_params, _session, socket) do
-    {:ok, assign(socket, query: "", results: [], loading: false)}
+    {:ok, assign(socket, query: "", hero_name: nil, results: [], loading: false)}
   end
 
+  @impl true
   def handle_event("search", %{"q" => query}, socket) do
     socket = assign(socket, loading: true, query: query)
 
-    results = Search.search(query)
+    hero_name = socket.assigns.hero_name
+    search_query = socket.assigns.query
+    results = Search.search(search_query, hero_name)
 
     {:noreply,
      assign(socket,
        results: results,
-       loading: false,
-       version: Integer.to_string(:os.system_time(:millisecond))
+       loading: false
      )}
   end
 
-  # def render(assigns) do
-  #   ~H"""
-  #   <div class="search-container">
-  #     <form phx-submit="search">
-  #       <input
-  #         type="text"
-  #         name="q"
-  #         value={@query}
-  #         placeholder="Search voice lines..."
-  #         autocomplete="off"
-  #       />
-  #       <button type="submit" disabled={@loading}>Search</button>
-  #     </form>
+  @impl true
+  def handle_event("update_hero_name", %{"hero_name" => hero_name}, socket) do
+    {:noreply, assign(socket, hero_name: hero_name)}
+  end
 
-  #     <%= if @loading do %>
-  #       <p>Loading...</p>
-  #     <% end %>
-
-  #     <div class="results">
-  #       <%= for clip <- @results do %>
-  #         <div class="clip">
-  #           <b>{clip.hero_name}</b>
-  #           <p>{clip.transcript}</p>
-  #           <audio controls id={"hero-audio-control-" <> clip.file_path} phx-hook="AudioReload">
-  #             <source
-  #               src={"/audio/#{URI.decode(clip.file_path)}"}
-  #               type="audio/mpeg"
-  #             /> Your browser does not support the audio element.
-  #           </audio>
-  #         </div>
-  #       <% end %>
-
-  #       <%= if Enum.empty?(@results) and not @loading do %>
-  #         <p>No results found</p>
-  #       <% end %>
-  #     </div>
-  #   </div>
-  #   """
-  # end
-
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="min-h-screen bg-gray-900 text-gray-200 p-4 sm:p-8 font-sans antialiased">
@@ -73,9 +42,19 @@ defmodule DotaDeckWeb.SearchLive do
             name="q"
             value={@query}
             placeholder="Search voice lines (e.g., 'Radiant', 'Alchemist', 'run')..."
+            phx-debounce="400"
             autocomplete="off"
             autofocus
             class="flex-grow p-3 rounded-md bg-gray-700 border border-yellow-700 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors text-lg placeholder-gray-400 text-white"
+          />
+          <input
+            type="text"
+            name="hero_name"
+            value={@hero_name}
+            placeholder="..."
+            autocomplete="off"
+            phx-change="update_hero_name"
+            class="..."
           />
           <button
             type="submit"
@@ -110,7 +89,7 @@ defmodule DotaDeckWeb.SearchLive do
             <%= for clip <- @results do %>
               <div class="clip p-4 bg-gray-800 rounded-xl shadow-xl border border-gray-700 hover:border-yellow-600/50 transition-all duration-200">
                 <h3 class="text-xl font-bold mb-1 text-yellow-500 uppercase tracking-widest border-b border-gray-700 pb-1">
-                  {clip.hero_name}
+                  {clip.hero.name}
                 </h3>
 
                 <p class="text-gray-300 italic mb-3 text-lg">
@@ -119,12 +98,12 @@ defmodule DotaDeckWeb.SearchLive do
 
                 <audio
                   controls
-                  id={"hero-audio-control-" <> clip.file_path}
+                  id={"hero-audio-control-" <> clip.filepath}
                   phx-hook="AudioReload"
                   class="w-full h-10 [&::-webkit-media-controls-panel]:bg-gray-700 [&::-webkit-media-controls-play-button]:bg-yellow-600 [&::-webkit-media-controls-play-button]:rounded-full [&::-webkit-media-controls-current-time-display]:text-gray-200 [&::-webkit-media-controls-time-remaining-display]:text-gray-400 [&::-webkit-media-controls-timeline]:bg-gray-600 [&::-webkit-media-controls-volume-slider]:bg-yellow-700"
                 >
                   <source
-                    src={"/audio/#{URI.decode(clip.file_path)}"}
+                    src={"/audio/#{URI.decode(clip.filepath)}"}
                     type="audio/mpeg"
                   /> Your browser does not support the audio element.
                 </audio>

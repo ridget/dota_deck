@@ -1,31 +1,28 @@
 defmodule DotaDeck.Scraper.ResponsesParser do
-  @moduledoc """
-  Parses the Axe responses page from the Dota 2 Wiki.
-  """
-
+  alias DotaDeck.Scraper.HeroNameFormatter
   @base_url "https://dota2.fandom.com/wiki"
 
   import Meeseeks.XPath
   require Logger
 
-  def fetch_and_parse(hero_name) do
-    url = "#{@base_url}/#{hero_name}/Responses"
+  def fetch_and_parse(%{id: hero_id, name: hero_name}) do
+    url = construct_responses_url(hero_name)
 
     case HTTPoison.get(url, [], follow_redirect: true) do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
-        extract_data(body, hero_name)
+        extract_data(body, hero_id)
 
       {:ok, %HTTPoison.Response{status_code: status}} ->
-        Logger.warning("Failed to fetch #{hero_name}: HTTP #{status}", hero_name: hero_name)
+        Logger.warning("Failed to fetch #{hero_name}: HTTP #{status}", hero_id: hero_id)
         []
 
       {:error, reason} ->
-        Logger.error("Error fetching #{hero_name}: #{inspect(reason)}", hero_name: hero_name)
+        Logger.error("Error fetching #{hero_name}: #{inspect(reason)}", hero_id: hero_id)
         []
     end
   end
 
-  defp extract_data(doc, hero_name) do
+  defp extract_data(doc, hero_id) do
     possible_lis =
       Meeseeks.all(doc, xpath("li[.//span//audio[@class='ext-audiobutton']]"))
       |> Enum.uniq_by(&Meeseeks.html/1)
@@ -82,10 +79,14 @@ defmodule DotaDeck.Scraper.ResponsesParser do
         audio_url: audio_url,
         hero_interaction: hero_interaction,
         voiceline: voiceline,
-        hero_name: hero_name,
+        hero_id: hero_id,
         ability_name: ability_name,
         item_name: item_text
       }
     end)
+  end
+
+  defp construct_responses_url(hero_name) do
+    "#{@base_url}/#{HeroNameFormatter.to_url_path_segment(hero_name)}/Responses"
   end
 end

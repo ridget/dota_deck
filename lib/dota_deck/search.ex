@@ -1,15 +1,15 @@
 defmodule DotaDeck.Search do
-  alias DotaDeck.{Repo, Clip}
-  alias DotaDeck.MLModels.Embedding
-  import Ecto.Query
-  import Pgvector.Ecto.Query
+  alias DotaDeck.Repo
+  alias DotaDeck.Data.Clip
+  alias DotaDeck.Models.Embedding
 
-  def search(query) do
-    %{embedding: emb} = Embedding.search(query)
-    by_embedding(emb)
-  end
+  def search(query, hero_name \\ nil) do
+    %{embedding: embedding} = Embedding.generate_embedding(query)
 
-  defp by_embedding(embedding) do
-    Repo.all(from c in Clip, order_by: l2_distance(c.embedding, ^embedding), limit: 25)
+    clips =
+      Clip.find_by_embedding(embedding, hero_name)
+      |> Repo.all()
+
+    Repo.preload(clips, :hero)
   end
 end

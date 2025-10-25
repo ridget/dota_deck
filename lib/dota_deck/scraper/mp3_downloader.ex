@@ -1,42 +1,50 @@
-defmodule DotaDeck.Scraper.MP3Downloader do
-  alias DotaDeck.Repo
-  alias DotaDeck.Scraper.StagingClip
-
+defmodule DotaDeck.Scraper.Mp3Downloader do
+  alias DotaDeck.Scraper.HeroNameFormatter
   require Logger
 
-  def run do
-    Repo.all(StagingClip.undownloaded())
-    |> Task.async_stream(&download_and_mark_as_downloaded/1,
+  def download_all(staging_clips) do
+    staging_clips
+    |> Task.async_stream(&download/1,
       max_concurrency: 8,
       timeout: :infinity
     )
-    |> Stream.run()
+    |> Enum.flat_map(fn
+      {:ok, updated_clip} ->
+        [updated_clip]
+
+      {:error, _reason} ->
+        []
+
+      _ ->
+        # Discard other errors/mismatches
+        []
+    end)
   end
 
-  def download_and_mark_as_downloaded(
-        %StagingClip{hero_name: hero_name, audio_url: audio_url, downloaded: false} = staging_clip
+  def download(
+        %DotaDeck.Data.StagingClip{
+          audio_url: audio_url,
+          hero: %{name: hero_name},
+          downloaded: false
+        } = staging_clip
       ) do
     static_dir = Path.join(["priv", "static", "audio"])
-    File.mkdir_p!("#{static_dir}/#{hero_name}")
+    hero_path_segment = HeroNameFormatter.to_url_path_segment(hero_name)
+    File.mkdir_p!("#{static_dir}/#{hero_path_segment}")
 
-    filepath = "#{hero_name}/#{build_filename(audio_url)}"
+    filepath = "#{hero_path_segment}/#{build_filename(audio_url)}"
 
     case download_audio_file("#{static_dir}/#{filepath}", audio_url) do
       :ok ->
-        case StagingClip.changeset(staging_clip, %{downloaded: true, filepath: filepath})
-             |> Repo.update() do
-          {:ok, updated_clip} ->
-            Logger.info("Successfully downloaded and marked: #{updated_clip.audio_url}")
-            {:ok, updated_clip}
+        updated_clip = %{staging_clip | downloaded: true, filepath: filepath}
 
-          {:error, changeset} ->
-            Logger.error("Failed to update StagingClip for #{audio_url}: #{inspect(changeset)}")
-            {:error, staging_clip}
-        end
+        updated_clip
+        |> Map.from_struct()
+        |> Map.drop([:updated_at, :hero, :__meta__])
 
       {:error, reason} ->
         Logger.warning("Failed to download or write audio for #{audio_url}: #{inspect(reason)}")
-        {:error, staging_clip}
+        {:error, reason}
     end
   end
 
@@ -48,7 +56,6 @@ defmodule DotaDeck.Scraper.MP3Downloader do
         :ok
 
       {:ok, resp} ->
-        # FIX: Use audio_url, remove body, and return {:error, reason}
         Logger.warning("Failed HTTP status for #{audio_url}: #{resp.status_code}",
           path: path
         )
@@ -56,7 +63,6 @@ defmodule DotaDeck.Scraper.MP3Downloader do
         {:error, {:http_status_error, resp.status_code}}
 
       {:error, reason} ->
-        # FIX: Use audio_url, remove body, and return {:error, reason}
         Logger.warning("Error downloading #{audio_url}: #{inspect(reason)}",
           path: path
         )

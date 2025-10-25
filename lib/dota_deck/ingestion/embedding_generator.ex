@@ -4,16 +4,14 @@ defmodule DotaDeck.Ingestion.EmbeddingGenerator do
       Enum.flat_map([changeset_map, llm_metadata_map], &Map.to_list/1)
 
     field_order = [
-      {:hero_name, "HERO"},
       {:headline, "HEADLINE"},
       {:context, "CONTEXT"},
-      {"emotion", "EMOTION"},
-      {"intent", "INTENT"},
-      {"theme", "THEME"},
-      {"summary", "SUMMARY"},
+      {:emotion, "EMOTION"},
+      {:intent, "INTENT"},
+      {:theme, "THEME"},
+      {:summary, "SUMMARY"},
       {:ability_name, "ABILITY"},
       {:item_name, "ITEM"},
-      {:hero_interaction, "INTERACTION"},
       {:voiceline, "TRANSCRIPT"}
     ]
 

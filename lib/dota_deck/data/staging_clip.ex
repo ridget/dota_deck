@@ -1,10 +1,9 @@
-defmodule DotaDeck.Scraper.StagingClip do
+defmodule DotaDeck.Data.StagingClip do
   use Ecto.Schema
   import Ecto.Query
   import Ecto.Changeset
 
   schema "staging_clips" do
-    field :hero_name, :string
     field :headline, :string
     field :audio_url, :string
     field :context, :string
@@ -15,15 +14,18 @@ defmodule DotaDeck.Scraper.StagingClip do
     field :filepath, :string
     field :processed, :boolean
     field :downloaded, :boolean
+    belongs_to :hero, DotaDeck.Data.Hero
     timestamps()
   end
 
   def undownloaded() do
-    DotaDeck.Scraper.StagingClip |> where([sc], sc.downloaded == false)
+    __MODULE__
+    |> where([sc], sc.downloaded == false)
   end
 
   def downloaded_and_unprocessed() do
-    DotaDeck.Scraper.StagingClip |> where([sc], sc.downloaded == true and sc.processed == false)
+    __MODULE__
+    |> where([sc], sc.downloaded == true and sc.processed == false)
   end
 
   def changeset(staging_clip, attrs) do
