@@ -7,11 +7,16 @@ defmodule DotaDeck.Ingestion do
   def process() do
     Repo.all(StagingClip.downloaded_and_unprocessed())
     |> Repo.preload(:hero)
-    |> Enum.chunk_every(5)
+    |> Enum.chunk_every(1)
     |> Enum.each(fn chunk ->
       chunk
       |> Processor.process_clips()
       |> create_clips()
+
+      Enum.each(chunk, fn struct ->
+        Ecto.Changeset.change(struct, %{processed: true})
+        |> Repo.update!()
+      end)
     end)
   end
 

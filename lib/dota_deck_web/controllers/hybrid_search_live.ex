@@ -1,4 +1,4 @@
-defmodule DotaDeckWeb.SearchLive do
+defmodule DotaDeckWeb.HybridSearchLive do
   use DotaDeckWeb, :live_view
 
   alias DotaDeck.Search
@@ -8,7 +8,15 @@ defmodule DotaDeckWeb.SearchLive do
   @impl true
   def mount(_params, _session, socket) do
     heroes = Hero.list_all_heroes() |> Repo.all()
-    {:ok, assign(socket, query: "", heroes: heroes, hero_id: nil, results: [], loading: false)}
+
+    {:ok,
+     assign(socket,
+       query: "",
+       hero_id: nil,
+       results: [],
+       loading: false,
+       heroes: heroes
+     )}
   end
 
   @impl true
@@ -17,7 +25,8 @@ defmodule DotaDeckWeb.SearchLive do
 
     hero_id = socket.assigns.hero_id
     search_query = socket.assigns.query
-    results = Search.search(search_query, hero_id)
+
+    results = Search.hybrid_search(search_query, hero_id)
 
     {:noreply,
      assign(socket,
@@ -37,7 +46,7 @@ defmodule DotaDeckWeb.SearchLive do
     socket = assign(socket, loading: true, hero_id: hero_id)
 
     search_query = socket.assigns.query
-    results = Search.search(search_query, hero_id)
+    results = Search.hybrid_search(search_query, hero_id)
 
     {:noreply,
      assign(socket,
@@ -79,16 +88,11 @@ defmodule DotaDeckWeb.SearchLive do
               Filter Hero (All Heroes)
             </option>
             <%= for hero <- @heroes do %>
-              <option
-                value={hero.id}
-                selected={@hero_id == hero.id}
-                class="bg-gray-800 text-white"
-              >
+              <option value={hero.id} selected={@hero_id == hero.id} class="bg-gray-800 text-white">
                 {hero.name}
               </option>
             <% end %>
           </select>
-
           <button
             type="submit"
             disabled={@loading}

@@ -17,7 +17,7 @@ defmodule DotaDeckWeb.Router do
   scope "/", DotaDeckWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
+    live "/", HybridSearchLive
     live "/search", SearchLive
   end
 

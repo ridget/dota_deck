@@ -5,32 +5,34 @@ defmodule DotaDeck.Data.Clip do
 
   schema "clips" do
     field :filepath, :string
+    field :original_transcript, :string
     field :transcript, :string
+    field :context_embedding, Pgvector.Ecto.Vector
     field :embedding, Pgvector.Ecto.Vector
-    field :raw_embedding, :string
+    field :context_raw_embedding, :string
     belongs_to :hero, DotaDeck.Data.Hero
     timestamps()
   end
 
-  def find_by_embedding(embedding, hero_name) do
+  def find_by_embedding(embedding, hero_id) do
     __MODULE__
-    |> filter_by_hero_name(hero_name)
+    |> filter_by_hero_id(hero_id)
     |> order_by_embedding(embedding)
   end
 
   defp order_by_embedding(query, embedding) do
     from c in query,
-      order_by: cosine_distance(c.embedding, ^embedding),
+      order_by: cosine_distance(c.context_embedding, ^embedding),
       limit: 25
   end
 
-  defp filter_by_hero_name(query, nil) do
-    query
-  end
-
-  defp filter_by_hero_name(query, hero_name) when is_binary(hero_name) do
+  defp filter_by_hero_id(query, hero_id) when is_integer(hero_id) do
     from c in query,
       inner_join: h in assoc(c, :hero),
-      where: h.name == ^hero_name
+      where: h.id == ^hero_id
+  end
+
+  defp filter_by_hero_id(query, _) do
+    query
   end
 end

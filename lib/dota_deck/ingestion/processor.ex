@@ -29,19 +29,26 @@ defmodule DotaDeck.Ingestion.Processor do
     end)
   end
 
-  defp process_clip(%{downloaded: true, processed: false, filepath: path} = staging_clip) do
+  defp process_clip(
+         %{downloaded: true, processed: false, filepath: path, voiceline: voiceline} =
+           staging_clip
+       ) do
     with %{chunks: [%{text: tx} | _]} <-
            SpeechTranscription.predict(@audio_dir <> "/" <> path),
          trimmed_text = String.trim(tx),
          {:ok, metadata} <- VoiceLineMetadata.predict(staging_clip, trimmed_text),
-         text_to_embed = EmbeddingGenerator.generate(staging_clip, metadata),
-         %{embedding: emb} <-
-           Embedding.batch_generate_embedding(text_to_embed) do
+         context_text_to_embed = EmbeddingGenerator.generate(staging_clip, metadata),
+         %{embedding: embedding} <-
+           Embedding.batch_generate_embedding(trimmed_text),
+         %{embedding: context_embedding} <-
+           Embedding.batch_generate_embedding(context_text_to_embed) do
       %{
         filepath: path,
         transcript: trimmed_text,
-        embedding: emb,
-        raw_embedding: text_to_embed,
+        original_transcript: voiceline,
+        context_embedding: context_embedding,
+        embedding: embedding,
+        context_raw_embedding: context_text_to_embed,
         hero_id: staging_clip.hero_id
       }
     else

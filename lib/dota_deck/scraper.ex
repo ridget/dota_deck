@@ -5,6 +5,12 @@ defmodule DotaDeck.Scraper do
   import NaiveDateTime
   require Logger
 
+  def pipeline() do
+    create_heroes()
+    create_staging_clips()
+    download_audio()
+  end
+
   def create_heroes() do
     HeroScraper.scrape()
     |> create_heroes()

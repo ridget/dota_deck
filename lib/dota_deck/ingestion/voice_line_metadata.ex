@@ -41,7 +41,7 @@ defmodule DotaDeck.Ingestion.VoiceLineMetadata do
           %{
             role: "user",
             content: """
-            You are an expert prompt engineer and an expert semantic analyzer for Dota 2 voice lines.
+            You are an expert semantic analyzer for Dota 2 voice lines.
 
             Your task is to analyze raw voice lines and their structured metadata.
             You MUST generate four new, critical semantic fields: emotion, intent, theme, and a brief contextual summary.

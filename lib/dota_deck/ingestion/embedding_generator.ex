@@ -3,30 +3,27 @@ defmodule DotaDeck.Ingestion.EmbeddingGenerator do
     all_fields =
       Enum.flat_map([changeset_map, llm_metadata_map], &Map.to_list/1)
 
-    field_order = [
-      {:headline, "HEADLINE"},
-      {:context, "CONTEXT"},
-      {:emotion, "EMOTION"},
-      {:intent, "INTENT"},
-      {:theme, "THEME"},
-      {:summary, "SUMMARY"},
-      {:ability_name, "ABILITY"},
-      {:item_name, "ITEM"},
-      {:voiceline, "TRANSCRIPT"}
+    field_order_narrative = [
+      {:voiceline, "transcript"},
+      {:summary, "summary"},
+      {:intent, "intent"},
+      {:theme, "theme"},
+      {:emotion, "emotion"}
     ]
 
     final_string =
-      Enum.reduce(field_order, [], fn {key, prefix}, acc ->
+      Enum.reduce(field_order_narrative, [], fn {key, prefix}, acc ->
         case List.keyfind(all_fields, key, 0) do
           {^key, value} when is_binary(value) and value != "" ->
-            ["#{prefix}: #{value}."] ++ acc
+            ["#{prefix}: #{value}"] ++ acc
 
           _ ->
             acc
         end
       end)
       |> Enum.reverse()
-      |> Enum.join(" ")
+      |> Enum.join(". ")
+      |> String.replace("..", ".")
 
     final_string
   end
